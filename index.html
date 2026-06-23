@@ -658,6 +658,104 @@
       .home-title { font-size: 3.8rem; }
       .aw-list { gap: 1.1rem; }
     }
+
+    /* ─────────────────────────────────────────
+       DESKTOP LAYOUT (≥768px)
+       Телефон — по центру как будто держишь его.
+       Всё остальное — тёмный фон с узором.
+    ───────────────────────────────────────── */
+    @media (min-width: 768px) {
+
+      /* Паттерн-фон за «телефоном» */
+      body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: -1;
+        background:
+          radial-gradient(ellipse 60% 50% at 50% -10%, rgba(201,160,74,.07) 0%, transparent 60%),
+          radial-gradient(ellipse 40% 30% at 10% 80%, rgba(201,160,74,.04) 0%, transparent 50%),
+          radial-gradient(ellipse 30% 25% at 90% 20%, rgba(201,160,74,.03) 0%, transparent 50%);
+        background-color: #030308;
+      }
+
+      /* Тонкая сетка-текстура на фоне */
+      body::after {
+        content: '';
+        position: fixed; inset: 0; z-index: -1; pointer-events: none;
+        background-image:
+          linear-gradient(rgba(201,160,74,.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(201,160,74,.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+
+      /* Splash — тоже по центру */
+      #splash {
+        background: transparent;
+      }
+      #splash > *:not(.sp-glow) { position: relative; z-index: 1; }
+
+      /* Главный контейнер — «телефон» в центре */
+      #app {
+        position: fixed;
+        inset: auto;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        height: min(860px, 92vh);
+        border-radius: 36px;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 1px rgba(201,160,74,.18),
+          0 0 0 6px rgba(6,6,16,.9),
+          0 0 0 7px rgba(201,160,74,.08),
+          0 40px 80px rgba(0,0,0,.7),
+          0 0 60px rgba(201,160,74,.06);
+      }
+
+      /* Убираем fixed у секретной точки, перемещаем внутрь */
+      #secdot {
+        position: absolute;
+        bottom: calc(var(--nav-h) + 8px);
+        right: 12px;
+      }
+
+      /* Lightbox — на весь экран поверх всего */
+      #lb {
+        border-radius: 0;
+      }
+
+      /* Полоска «динамик» сверху как у телефона */
+      #app::before {
+        content: '';
+        position: absolute;
+        top: 14px; left: 50%; transform: translateX(-50%);
+        width: 70px; height: 5px;
+        background: rgba(255,255,255,.12);
+        border-radius: 10px;
+        z-index: 999; pointer-events: none;
+      }
+
+      /* Текст-подсказка под телефоном */
+      #desk-hint {
+        display: block;
+        position: fixed;
+        bottom: 2rem; left: 50%; transform: translateX(-50%);
+        font-size: .65rem; color: rgba(201,160,74,.3);
+        letter-spacing: .18em; text-transform: uppercase;
+        white-space: nowrap; z-index: 0;
+        user-select: none;
+      }
+    }
+
+    /* На совсем больших экранах — чуть крупнее */
+    @media (min-width: 1200px) {
+      #app {
+        width: 440px;
+        height: min(900px, 90vh);
+      }
+    }
+
+    /* Десктопный хинт — скрыт на мобиле */
+    #desk-hint { display: none; }
   </style>
 </head>
 <body>
@@ -1472,8 +1570,54 @@
     }
   }
 
+  // ─── Lazy loading для фото ────────────────
+  // Используйте data-src вместо src для ленивой загрузки:
+  // <img data-src="ВАША_ССЫЛКА" alt="...">
+  // Фото загрузится только когда появится на экране.
+  function setupLazyLoad() {
+    const lazyImgs = document.querySelectorAll('img[data-src]');
+    if (!lazyImgs.length) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const img = e.target;
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          io.unobserve(img);
+        }
+      });
+    }, { rootMargin: '200px' });
+    lazyImgs.forEach(img => io.observe(img));
+  }
+
+  // ─── Desktop: центрируем splash тоже ─────
+  function positionSplash() {
+    if (window.innerWidth < 768) return;
+    const sp = document.getElementById('splash');
+    sp.style.cssText = `
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 420px;
+      height: min(860px, 92vh);
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(201,160,74,.18),
+                  0 0 0 6px rgba(6,6,16,.9),
+                  0 0 0 7px rgba(201,160,74,.08),
+                  0 40px 80px rgba(0,0,0,.7);
+    `;
+  }
+
   // ─── Init ─────────────────────────────────
   observe(document.getElementById('p-home'));
+  setupLazyLoad();
+  positionSplash();
+  window.addEventListener('resize', positionSplash);
 </script>
+
+<!-- Подсказка под телефоном на ПК -->
+<span id="desk-hint">История одной группы &nbsp;·&nbsp; Выпуск 2026</span>
+
 </body>
 </html>
